@@ -19,19 +19,21 @@ namespace EffParsers
         {
             List<Player> playersList = new List<Player>();
             
-            ParsePage(playersList);
+            //ParsePage(playersList);
+            ParsePageFromFile(playersList);
+
             PrepareGamesTable();
             ParseEffPage(0);
-            //ParseEffPage(15);
-            //ParseEffPage(30);
-            //ParseEffPage(45);
-            //ParseEffPage(60);
-            //ParseEffPage(75);
-            //ParseEffPage(90);
-            //ParseEffPage(105);
-            //ParseEffPage(120);
-            //ParseEffPage(135);
-            //ParseEffPage(150);
+            ParseEffPage(15);
+            ParseEffPage(30);
+            ParseEffPage(45);
+            ParseEffPage(60);
+            ParseEffPage(75);
+            ParseEffPage(90);
+            ParseEffPage(105);
+            ParseEffPage(120);
+            ParseEffPage(135);
+            ParseEffPage(150);
             //ParseEffPage(165);
         }
 
@@ -39,7 +41,7 @@ namespace EffParsers
         {
             using (WebClient wc1 = new WebClient())
             {
-                var link = "http://stats.nba.com/stats/leaguedashplayerstats?Season=2017-18&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
+                var link = "http://stats.nba.com/stats/leaguedashplayerstats?Season=2018-19&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
                 wc1.Headers.Add("accept-encoding", "Accepflate, sdch");
                 wc1.Headers.Add("Accept-Language", "en");
                 wc1.Headers.Add("origin", "http://stats.nba.com");
@@ -76,11 +78,11 @@ namespace EffParsers
             string urlToParse = string.Empty;
             if (page == 0)
             {
-                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=114449";
+                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=134838";
             }
             else
             {
-                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=114449&start=" + page.ToString();
+                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=134838&start=" + page.ToString();
             }
             HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(urlToParse);
             myRequest.Method = "GET";
@@ -162,14 +164,30 @@ namespace EffParsers
         private static void ParsePage(List<Player> playersList)
         {
             WebClient wc1 = new WebClient();
-            var link = "http://stats.nba.com/stats/leaguedashplayerstats?Season=2017-18&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
-            wc1.Headers.Add("accept-encoding", "Accepflate, sdch");
-            wc1.Headers.Add("Accept-Language", "en");
-            wc1.Headers.Add("origin", "http://stats.nba.com");
-            wc1.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36");
+            var link = "https://stats.nba.com/stats/leaguedashplayerstats?Season=2018-19&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
+            wc1.Headers.Add("Host", "stats.nba.com");
+            wc1.Headers.Add("Cache-Control", "max-age=0");
+            wc1.Headers.Add("Upgrade-Insecure-Requests", "1");
+            wc1.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
+            wc1.Headers.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+            wc1.Headers.Add("Accept-Encoding", "gzip, deflate, br");
+            wc1.Headers.Add("Accept-Language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7");
+
+
             var json1 = wc1.DownloadString(link);
             wc1.Dispose();
             SaveResultOnDb(ConvertResultToPlayersList(json1));
+            //return result;
+        }
+        private static void ParsePageFromFile(List<Player> playersList)
+        {
+            string json = string.Empty;
+            using (StreamReader r = new StreamReader("PlayerFile.txt"))
+            {
+                json = r.ReadToEnd();
+                
+            }
+            SaveResultOnDb(ConvertResultToPlayersList(json));
             //return result;
         }
 
