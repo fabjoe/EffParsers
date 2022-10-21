@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.Configuration;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace EffParsers
 {
@@ -20,20 +21,20 @@ namespace EffParsers
             List<Player> playersList = new List<Player>();
             
             //ParsePage(playersList);
-            ParsePageFromFile(playersList);
+            //ParsePageFromFile(playersList);
 
             PrepareGamesTable();
             ParseEffPage(0);
-            ParseEffPage(15);
-            ParseEffPage(30);
-            ParseEffPage(45);
-            ParseEffPage(60);
-            ParseEffPage(75);
-            ParseEffPage(90);
-            ParseEffPage(105);
-            ParseEffPage(120);
-            ParseEffPage(135);
-            ParseEffPage(150);
+            //ParseEffPage(15);
+            //ParseEffPage(30);
+            //ParseEffPage(45);
+            //ParseEffPage(60);
+            //ParseEffPage(75);
+            //ParseEffPage(90);
+            //ParseEffPage(105);
+            //ParseEffPage(120);
+            //ParseEffPage(135);
+            //ParseEffPage(150);
             //ParseEffPage(165);
         }
 
@@ -41,7 +42,7 @@ namespace EffParsers
         {
             using (WebClient wc1 = new WebClient())
             {
-                var link = "http://stats.nba.com/stats/leaguedashplayerstats?Season=2018-19&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
+                var link = "https://stats.nba.com/stats/leaguedashplayerstats?Season=2019-20&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
                 wc1.Headers.Add("accept-encoding", "Accepflate, sdch");
                 wc1.Headers.Add("Accept-Language", "en");
                 wc1.Headers.Add("origin", "http://stats.nba.com");
@@ -78,11 +79,11 @@ namespace EffParsers
             string urlToParse = string.Empty;
             if (page == 0)
             {
-                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=134838";
+                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=213089";
             }
             else
             {
-                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=134838&start=" + page.ToString();
+                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=213089&start=" + page.ToString();
             }
             HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(urlToParse);
             myRequest.Method = "GET";
@@ -92,14 +93,23 @@ namespace EffParsers
             sr.Close();
             myResponse.Close();
             string[] lines = result.Split(new string[] { "<br />" }, StringSplitOptions.None);
+            DateTime dtMatchDate = new DateTime(1972, 6, 14);
             foreach (string line in lines)
             {
+                if (line.Contains("#0000FF"))
+                {
+                    dtMatchDate = ExtractDateFromLine(line);
+                }
                 if (!String.IsNullOrEmpty(line) && Char.IsLetter(line[0]))
                 {
-                    
-                    if (!line.Contains("Grazie") && (!line.Contains("quotidianamente")) && (!line.Contains("pregati")) && (!line.Contains("Traduzione Italiana")) && (!line.Contains("Fantacalcio")) && (!line.Contains("Software")))
+                    string cleanLine = string.Empty;
+                    if (line.Contains("<"))
+                        cleanLine = line.Substring(0, line.IndexOfAny("<".ToCharArray()));
+                    else
+                        cleanLine = line;
+                    if (!cleanLine.Contains("Grazie") && (!cleanLine.Contains("quotidianamente")) && (!cleanLine.Contains("pregati")) && (!cleanLine.Contains("Traduzione Italiana")) && (!cleanLine.Contains("Fantacalcio")) && (!cleanLine.Contains("Software")))
                     {
-                        string game = line.Replace('\t', '_').Replace(@"/","").Replace("__","_");
+                        string game = cleanLine.Replace('\t', '_').Replace(@"/","").Replace("__","_");
                         string playerName = game.Substring(0, game.IndexOfAny("0123456789".ToCharArray()));
                         playerName = playerName.Replace("_", "").Trim();
                         string numericInfo = game.Substring(game.IndexOfAny("0123456789".ToCharArray()));
@@ -109,10 +119,35 @@ namespace EffParsers
                         gameToSave.minutesPlayed = gameInfo[0];
                         gameToSave.efficiency = Regex.Match(gameInfo[1].Replace("</div>",""), @"[+-]?\d+(\.\d+)?").Value;
                         gameToSave.effMin = CalculateEffMin(gameToSave.minutesPlayed, gameToSave.efficiency);
+                        gameToSave.matchDate = dtMatchDate;
                         SaveGameOnDb(gameToSave);
                     }
                 }
             }
+        }
+
+        private static DateTime ExtractDateFromLine(string line)
+        {
+            string lineWithDate = line;
+            int position = lineWithDate.LastIndexOf(@"<span style=""font-weight: bold"">");
+            if (position > -1)
+            {
+                lineWithDate = lineWithDate.Substring(position + 36);
+                var stringPart = lineWithDate.Split('<');
+                var dateParts = stringPart[0].Split('/');
+                int day = Int32.Parse(dateParts[0]);
+                int month = Int32.Parse(dateParts[1]);
+                int year = Int32.Parse(dateParts[2]);
+
+                DateTime dt = new DateTime(year,month,day);
+                return dt;
+                //Regex rgx = new Regex(@"\d{2}/\d{2}/\d{4}");
+                //Match mat = rgx.Match(stringPart[0]);
+                //if (mat.Success)
+                //    if (DateTime.TryParseExact(mat.ToString(), "dd/MM/yyyy", null, DateTimeStyles.None, out dt))
+                //return dt;
+            }
+            return new DateTime(1972,6,14);
         }
 
         private static void SaveGameOnDb(Game gameToSave)
@@ -127,15 +162,18 @@ namespace EffParsers
                                                ([PlayerName]
                                                ,[Minutes]
                                                ,[Efficiency]
-                                               ,[EffMin]) VALUES
+                                               ,[EffMin]
+                                               ,[MatchDate]) VALUES
                                                 (@PlayerName,
                                                  @Minutes,
                                                 @Efficiency,
-                                                @EffMin)";
+                                                @EffMin,
+                                                @MatchDate)";
                         cmd.Parameters.AddWithValue("@PlayerName", gameToSave.playerName);
                         cmd.Parameters.AddWithValue("@Minutes", gameToSave.minutesPlayed);
                         cmd.Parameters.AddWithValue("@Efficiency", gameToSave.efficiency);
                         cmd.Parameters.AddWithValue("@EffMin", gameToSave.effMin);
+                        cmd.Parameters.AddWithValue("@MatchDate", gameToSave.matchDate);
                         cmd.ExecuteNonQuery();
                 }
             }
@@ -164,14 +202,17 @@ namespace EffParsers
         private static void ParsePage(List<Player> playersList)
         {
             WebClient wc1 = new WebClient();
-            var link = "https://stats.nba.com/stats/leaguedashplayerstats?Season=2018-19&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
-            wc1.Headers.Add("Host", "stats.nba.com");
-            wc1.Headers.Add("Cache-Control", "max-age=0");
-            wc1.Headers.Add("Upgrade-Insecure-Requests", "1");
-            wc1.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
-            wc1.Headers.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
-            wc1.Headers.Add("Accept-Encoding", "gzip, deflate, br");
-            wc1.Headers.Add("Accept-Language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7");
+            var link = "https://stats.nba.com/stats/leaguedashplayerstats?Season=2019-20&SeasonType=Regular+Season&LeagueID=00&MeasureType=Base&PerMode=PerGame&PlusMinus=N&PaceAdjust=N&Rank=N&Outcome=&Location=&Month=0&SeasonSegment=&DateFrom=&DateTo=&OpponentTeamID=0&VsConference=&VsDivision=&GameSegment=&Period=0&LastNGames=0&GameScope=&PlayerExperience=&PlayerPosition=&StarterBench=&ls=iref%3Anba%3Agnav&pageNo=1&rowsPerPage=500";
+            wc1.Headers.Add("host", "stats.nba.com");
+            //wc1.Headers.Add("cache-control", "max-age=0");
+            wc1.Headers.Add("Referer", "https://stats.nba.com");
+            wc1.Headers.Add("Origin", "https://stats.nba.com");
+            wc1.Headers.Add("x-nba-stats-origin", "stats");
+            wc1.Headers.Add("x-nba-stats-token", "true");
+            wc1.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36");
+            //wc1.Headers.Add("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+            //wc1.Headers.Add("accept-Encoding", "gzip, deflate, br, Accepflate, sdch");
+            //wc1.Headers.Add("accept-Language", "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7");
 
 
             var json1 = wc1.DownloadString(link);

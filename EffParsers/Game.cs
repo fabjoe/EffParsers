@@ -11,5 +11,6 @@ namespace EffParsers
         public string minutesPlayed { get; set; }
         public string efficiency { get; set; }
         public string effMin { get; set; }
+        public DateTime matchDate { get; set; }
     }
 }
