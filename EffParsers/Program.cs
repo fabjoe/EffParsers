@@ -25,8 +25,8 @@ namespace EffParsers
 
             PrepareGamesTable();
             ParseEffPage(0);
-            //ParseEffPage(15);
-            //ParseEffPage(30);
+            ParseEffPage(15);
+            ParseEffPage(30);
             //ParseEffPage(45);
             //ParseEffPage(60);
             //ParseEffPage(75);
