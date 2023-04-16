@@ -12,6 +12,7 @@ using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.Globalization;
 
+
 namespace EffParsers
 {
     class Program
@@ -27,15 +28,15 @@ namespace EffParsers
             ParseEffPage(0);
             ParseEffPage(15);
             ParseEffPage(30);
-            //ParseEffPage(45);
-            //ParseEffPage(60);
-            //ParseEffPage(75);
-            //ParseEffPage(90);
-            //ParseEffPage(105);
-            //ParseEffPage(120);
-            //ParseEffPage(135);
-            //ParseEffPage(150);
-            //ParseEffPage(165);
+            ParseEffPage(45);
+            ParseEffPage(60);
+            ParseEffPage(75);
+            ParseEffPage(90);
+            ParseEffPage(105);
+            ParseEffPage(120);
+            ParseEffPage(135);
+            ParseEffPage(150);
+            ParseEffPage(165);
         }
 
         private static void ParseWeb2()
@@ -92,7 +93,7 @@ namespace EffParsers
             string result = sr.ReadToEnd();
             sr.Close();
             myResponse.Close();
-            string[] lines = result.Split(new string[] { "<br />" }, StringSplitOptions.None);
+            string[] lines = result.Split(new string[] { "<br/>" }, StringSplitOptions.None);
             DateTime dtMatchDate = new DateTime(1972, 6, 14);
             foreach (string line in lines)
             {
@@ -113,11 +114,15 @@ namespace EffParsers
                         string playerName = game.Substring(0, game.IndexOfAny("0123456789".ToCharArray()));
                         playerName = playerName.Replace("_", "").Trim();
                         string numericInfo = game.Substring(game.IndexOfAny("0123456789".ToCharArray()));
-                        string[] gameInfo = numericInfo.Split('_');
+                        string[] gameInfo = null;
+                        if(numericInfo.Contains("_"))
+                            gameInfo = numericInfo.Split('_');
+                        if (numericInfo.Contains(" "))
+                            gameInfo = numericInfo.Split(' ');
                         Game gameToSave = new Game();
                         gameToSave.playerName = playerName;
-                        gameToSave.minutesPlayed = gameInfo[0];
-                        gameToSave.efficiency = Regex.Match(gameInfo[1].Replace("</div>",""), @"[+-]?\d+(\.\d+)?").Value;
+                        gameToSave.minutesPlayed = Extensions.GetNumbers(gameInfo[0]);
+                        gameToSave.efficiency = Extensions.GetNumbers(Regex.Match(gameInfo[1].Replace("</div>",""), @"[+-]?\d+(\.\d+)?").Value);
                         gameToSave.effMin = CalculateEffMin(gameToSave.minutesPlayed, gameToSave.efficiency);
                         gameToSave.matchDate = dtMatchDate;
                         SaveGameOnDb(gameToSave);
@@ -129,10 +134,10 @@ namespace EffParsers
         private static DateTime ExtractDateFromLine(string line)
         {
             string lineWithDate = line;
-            int position = lineWithDate.LastIndexOf(@"<span style=""font-weight: bold"">");
+            int position = lineWithDate.LastIndexOf(@"color: #0000FF""><span style=""font-weight: bold"">");
             if (position > -1)
             {
-                lineWithDate = lineWithDate.Substring(position + 36);
+                lineWithDate = lineWithDate.Substring(position + 52);
                 var stringPart = lineWithDate.Split('<');
                 var dateParts = stringPart[0].Split('/');
                 int day = Int32.Parse(dateParts[0]);
@@ -188,7 +193,7 @@ namespace EffParsers
             }
             catch (System.Exception excep)
             {
-                return string.Empty;
+                return "0";
             }
         }
 
