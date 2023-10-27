@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace EffParsers
 {
@@ -9,7 +10,9 @@ namespace EffParsers
     {
         public static string GetNumbers(string input)
         {
-            return new string(input.Where(c => char.IsDigit(c)).ToArray());
+            var match = Regex.Match(input, "-?\\d+");
+            return match.Value;
+            //return new string(input.Where(c => char.IsDigit(c)).ToArray());
         }
     }
 }

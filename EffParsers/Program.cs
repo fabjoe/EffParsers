@@ -26,17 +26,20 @@ namespace EffParsers
 
             PrepareGamesTable();
             ParseEffPage(0);
-            ParseEffPage(15);
-            ParseEffPage(30);
-            ParseEffPage(45);
-            ParseEffPage(60);
-            ParseEffPage(75);
-            ParseEffPage(90);
-            ParseEffPage(105);
-            ParseEffPage(120);
-            ParseEffPage(135);
-            ParseEffPage(150);
-            ParseEffPage(165);
+            //ParseEffPage(15);
+            //ParseEffPage(30);
+            //ParseEffPage(45);
+            //ParseEffPage(60);
+            //ParseEffPage(75);
+            //ParseEffPage(90);
+            //ParseEffPage(105);
+            //ParseEffPage(120);
+            //ParseEffPage(135);
+            //ParseEffPage(150);
+            //ParseEffPage(165);
+            //ParseEffPage(180);
+            //ParseEffPage(195);
+            //ParseEffPage(210);
         }
 
         private static void ParseWeb2()
@@ -80,11 +83,11 @@ namespace EffParsers
             string urlToParse = string.Empty;
             if (page == 0)
             {
-                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=213089";
+                urlToParse = @"https://forum.gruppoesperti.it/viewtopic.php?f=188&t=219118";
             }
             else
             {
-                urlToParse = @"http://forum.gruppoesperti.it/viewtopic.php?f=188&t=213089&start=" + page.ToString();
+                urlToParse = @"https://forum.gruppoesperti.it/viewtopic.php?f=188&t=219118&start=" + page.ToString();
             }
             HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(urlToParse);
             myRequest.Method = "GET";
@@ -122,7 +125,7 @@ namespace EffParsers
                         Game gameToSave = new Game();
                         gameToSave.playerName = playerName;
                         gameToSave.minutesPlayed = Extensions.GetNumbers(gameInfo[0]);
-                        gameToSave.efficiency = Extensions.GetNumbers(Regex.Match(gameInfo[1].Replace("</div>",""), @"[+-]?\d+(\.\d+)?").Value);
+                        gameToSave.efficiency = Extensions.GetNumbers(Regex.Match(gameInfo[gameInfo.Length-1].Replace("</div>",""), @"[+-]?\d+(\.\d+)?").Value);
                         gameToSave.effMin = CalculateEffMin(gameToSave.minutesPlayed, gameToSave.efficiency);
                         gameToSave.matchDate = dtMatchDate;
                         SaveGameOnDb(gameToSave);
